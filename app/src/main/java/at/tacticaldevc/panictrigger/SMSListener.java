@@ -28,19 +28,22 @@ public class SMSListener extends BroadcastReceiver {
         if(Telephony.Sms.Intents.SMS_RECEIVED_ACTION.equals(intent.getAction()))
         {
             Set<String> contacts = context.getSharedPreferences("conf", Context.MODE_PRIVATE).getStringSet(context.getString(R.string.var_numbers_trigger), new HashSet<String>());
+            
+            Set<String> contactsNrOnly = new HashSet<String>();
+            for (String contact : contacts){
+                int endNr = contact.indexOf(";");
+                String contactNrOnly = contact.substring(0, endNr);
+                contactsNrOnly.add(contactNrOnly);
+            }
+
             String msgs = context.getSharedPreferences("conf", Context.MODE_PRIVATE).getString(context.getString(R.string.var_words_trigger), "Panic");
-            for(SmsMessage msg : Telephony.Sms.Intents.getMessagesFromIntent(intent))
-            {
+            for(SmsMessage msg : Telephony.Sms.Intents.getMessagesFromIntent(intent)) {
                 String[] msgParts = msg.getMessageBody().split("\n");
-                if(contacts.contains(msg.getOriginatingAddress()) && msgs.contains(msgParts[0]))
-                {
-                    try
-                    {
+                if (contactsNrOnly.contains(msg.getOriginatingAddress()) && msgs.contains(msgParts[0])) {
+                    try {
                         triggerAlarm(context, msg.getOriginatingAddress(), msgParts[1], msgParts[2]);
                         break;
-                    }
-                    catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         triggerAlarm(context, msg.getOriginatingAddress(), null, null);
                     }
                 }
